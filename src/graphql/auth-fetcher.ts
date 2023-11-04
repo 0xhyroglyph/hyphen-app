@@ -30,7 +30,6 @@ export const fetchData = <TData, TVariables>(
     return accessToken;
   }
 
-
   return async () => {
     const token = typeof window !== "undefined" ? await getAccessToken() : null;
 
