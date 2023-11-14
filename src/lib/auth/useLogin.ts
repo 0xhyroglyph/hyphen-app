@@ -1,42 +1,44 @@
 import { useAuthenticationMutation } from "@/graphql/generated";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAddress, useSDK } from "@thirdweb-dev/react";
 import generateChallenge from "./generateChallenge";
 import { setAccessToken } from "./helpers";
 
-// 1. Assure user has connected wallet
-
 export default function useLogin() {
-    const address = useAddress();
-    const sdk = useSDK();
-    const {mutateAsync: sendSignedMessage} = useAuthenticationMutation();
-    
-    async function login(){
-        if (!address) return;
+  const address = useAddress();
+  const sdk = useSDK();
+  const { mutateAsync: sendSignedMessage } = useAuthenticationMutation();
+  const client = useQueryClient();
 
-        // 2. Generate challenge from Lens API
-        const { challenge } = await generateChallenge(address);
+  // 1. Write the actual async function
+  async function login() {
+    if (!address) return;
 
-        // 3. Sign challenge with user's wallet
-        const signature = await sdk?.wallet.sign(challenge.text)
+    // 1. Generate challenge which comes from the Lens API
+    const { challenge } = await generateChallenge(address);
 
-        // 4. Send signed challenge to Lens API
-        const { authenticate } = await sendSignedMessage({
-                request: {
-                    address,
-                    signature,
-                }
-            })
-    }
-    console.log("Authenticated:", authenticate);
-    
-    // 5. Receeive access token from Lens API if successful
-    const {accessToken, refreshToken} = authenticate;
+    // 2. Sign the challenge with the user's wallet
+    const signature = await sdk?.wallet.sign(challenge.text);
+
+    // 3. Send the signed challenge to the Lens API
+    const { authenticate } = await sendSignedMessage({
+      request: {
+        address,
+        signature,
+      },
+    });
+
+    // 4. Receive a access token from the Lens API if  we succeed
+    // 5. Store the access token inside local storage so we can use it.
+    const { accessToken, refreshToken } = authenticate;
 
     setAccessToken(accessToken, refreshToken);
 
-    // 6. Store access token in local storage so it can be used 
-    
-        return useMutation(login);
+    // Now, let's ask react query to refetch the cache key
+    // Refetch this cache key:  ["lens-user", address],
+    client.invalidateQueries(["lens-user", address]);
+  }
 
+  // 2. Return the useMutation hook wrapping the async function
+  return useMutation(login);
 }
