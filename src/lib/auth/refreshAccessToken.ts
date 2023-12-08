@@ -1,65 +1,59 @@
-import { fetchData } from "@/graphql/auth-fetcher";
-import { ChallengeQueryVariables, RefreshDocument, RefreshMutation, RefreshMutationVariables } from "@/graphql/generated";
+import {
+  RefreshMutation,
+  RefreshMutationVariables,
+  RefreshDocument,
+} from "../../graphql/generated";
 import { readAccessToken, setAccessToken } from "./helpers";
 
 export default async function refreshAccessToken() {
+  // 1. Get our current refresh token from local storage
+  const currentRefreshToken = readAccessToken()?.refreshToken;
 
-    // Read refresh token from storage
-    const currentRefreshToken = readAccessToken()?.refreshToken;
-    if (!currentRefreshToken) return null;
+  if (!currentRefreshToken) return null;
 
-    async function fetchData<TData, TVariables>(
-        query: string,
-        variables?: TVariables,
-        options?: RequestInit["headers"]
-    )
-    {
-            const res = await fetch("https://api.lens.dev", {
-              method: 'POST',
-              headers: {
-                "Content-Type": "application/json",
-                ...options,
-                "Access-Control-Allow-Origin": "*",
-              },
-              body: JSON.stringify({
-                query,
-                variables
-              })
-            })
-         
-            const json = await res.json()
-         
-            if (json.errors) {
-              const { message } = json.errors[0] || {}
-              throw new Error(message || 'Error…')
-            }
-         
-            return json.data
-          }
+  async function fetchData<TData, TVariables>(
+    query: string,
+    variables?: TVariables,
+    options?: RequestInit["headers"]
+  ): Promise<TData> {
+    const res = await fetch("https://api.lens.dev/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...options,
+        "Access-Control-Allow-Origin": "*",
+      },
+      body: JSON.stringify({
+        query,
+        variables,
+      }),
+    });
+
+    const json = await res.json();
+
+    if (json.errors) {
+      const { message } = json.errors[0] || {};
+      throw new Error(message || "Error…");
     }
 
-    // Send to Lens ot ask for new access token
-    const result = await fetchData<RefreshMutation, RefreshMutationVariables>(
-        RefreshDocument,
-        {
-            request: {
-                refreshToken: currentRefreshToken,
-        },
-        }
-    )();
+    return json.data;
+  }
 
-    // Set new access token in local storage
-        const {accessToken, refreshToken: newRefreshToken} = = await fetchData<
-        RefreshMutation,
-        RefreshMutationVariables
-        >(RefreshDocument, {
-            request: 
-            refreshAccessToken
-        } )
-        result.refresh;
-        
-        setAccessToken(accessToken, newRefreshToken);
+  // 3. set the new access token in local storage
+  const result = await fetchData<RefreshMutation, RefreshMutationVariables>(
+    RefreshDocument,
+    {
+      request: {
+        refreshToken: currentRefreshToken,
+      },
+    }
+  );
 
-        return accessToken as string;
-        
+  const {
+    refresh: { accessToken, refreshToken: newRefreshToken },
+  } = result;
+
+  setAccessToken(accessToken, newRefreshToken);
+
+  return accessToken as string;
 }

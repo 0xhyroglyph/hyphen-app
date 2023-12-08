@@ -1,40 +1,37 @@
-// Logic to run on all requests to Lens GraphQL Server
+import { isTokenExpired, readAccessToken } from "../lib/auth/helpers";
+import refreshAccessToken from "../lib/auth/refreshAccessToken";
 
-import { isTokenExpired, readAccessToken } from "@/lib/auth/helpers"
-import refreshAccessToken from "@/lib/auth/refreshAccessToken";
-
-export const fetchData = <TData, TVariables>(
+export const fetcher = <TData, TVariables>(
   query: string,
   variables?: TVariables,
   options?: RequestInit["headers"]
 ): (() => Promise<TData>) => {
-
   async function getAccessToken() {
-    // Check local storage for access token
+    // 1. Check the local storage for the access token
     const token = readAccessToken();
-    
-    // If not, return null (not signed in)
-    if (!token) return null;
-    
-    let accessToken = token?.accessToken;
 
-    // If there is, check expiration
+    // 2. If there isn't a token, then return null (not signed in)
+    if (!token) return null;
+
+    let accessToken = token.accessToken;
+
+    // 3. If there is a token, then check it's expiration
     if (isTokenExpired(token.exp)) {
-    // If yes but expired, update with refresh token
+      // 4. If it's expired, update it using the refresh token
       const newToken = await refreshAccessToken();
-      if (!newToken) return null
+      if (!newToken) return null;
       accessToken = newToken;
     }
 
-    // Return access token
+    // Finally, return the token
     return accessToken;
   }
 
   return async () => {
     const token = typeof window !== "undefined" ? await getAccessToken() : null;
 
-    const res = await fetch("https://api.lens.dev", {
-      method: 'POST',
+    const res = await fetch("https://api.lens.dev/", {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...options,
@@ -43,17 +40,17 @@ export const fetchData = <TData, TVariables>(
       },
       body: JSON.stringify({
         query,
-        variables
-      })
-    })
- 
-    const json = await res.json()
- 
+        variables,
+      }),
+    });
+
+    const json = await res.json();
+
     if (json.errors) {
-      const { message } = json.errors[0] || {}
-      throw new Error(message || 'Error…')
+      const { message } = json.errors[0] || {};
+      throw new Error(message || "Error…");
     }
- 
-    return json.data
-  }
-}
+
+    return json.data;
+  };
+};
