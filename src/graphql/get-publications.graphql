@@ -1,5 +1,5 @@
-query ExplorePublications($request: ExplorePublicationRequest!) {
-  explorePublications(request: $request) {
+query publications($request: PublicationsQueryRequest!) {
+  publications(request: $request) {
     items {
       __typename
       ... on Post {

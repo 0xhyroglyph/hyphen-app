@@ -1,34 +1,37 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAddress } from "@thirdweb-dev/react";
 import { readAccessToken } from "./helpers";
-import { useDefaultProfileQuery } from "@/graphql/generated";
-import { profile } from "console";
+import { useDefaultProfileQuery } from "../../graphql/generated";
 
 export default function useLensUser() {
-    // Make react query for local storage key
-    const address = useAddress();
+  // 1. Make a react query for the local storage Key
+  const address = useAddress();
 
-    const localStorageQuery = useQuery(
-        ["lens-user", address],
+  const localStorageQuery = useQuery(
+    ["lens-user", address],
+    // Writing the actual function to check the local storage
+    () => readAccessToken()
+  );
 
-        // Function to check local storage
-        () => readAccessToken()
-    );
-
-    // if connected wallet, ask for default profile
-    const profileQuery = useDefaultProfileQuery({
-        request: {
-            ethereumAddress: address,
-        }
+  // If there is a connected wallet address
+  // Then we can ask for the default profile from Lens
+  const profileQuery = useDefaultProfileQuery(
+    {
+      request: {
+        ethereumAddress: address,
+      },
     },
     {
-        enabled: !!address, 
+      enabled: !!address,
     }
-    );
+  );
 
-    return {
-        // info about local storage and lens profile
-        isSignedInQuery: localStorageQuery,
-        profileQuery: profileQuery,
-    };
+  console.log(profileQuery.data?.defaultProfile);
+
+  return {
+    // Contains information about both the local storage
+    // AND the information about the lens profile
+    isSignedInQuery: localStorageQuery,
+    profileQuery: profileQuery,
+  };
 }

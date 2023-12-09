@@ -1,13 +1,13 @@
-import { useAuthenticationMutation } from "@/graphql/generated";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAddress, useSDK } from "@thirdweb-dev/react";
+import { useAuthenticateMutation } from "../../graphql/generated";
 import generateChallenge from "./generateChallenge";
 import { setAccessToken } from "./helpers";
 
 export default function useLogin() {
   const address = useAddress();
   const sdk = useSDK();
-  const { mutateAsync: sendSignedMessage } = useAuthenticationMutation();
+  const { mutateAsync: sendSignedMessage } = useAuthenticateMutation();
   const client = useQueryClient();
 
   // 1. Write the actual async function

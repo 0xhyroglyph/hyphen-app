@@ -1,58 +1,75 @@
-import React from 'react'
-import { ConnectWallet, useAddress, useNetwork, useNetworkMismatch, ChainId, MediaRenderer } from "@thirdweb-dev/react"
-import useLogin from "../lib/auth/useLogin"
-import useLensUser from '@/lib/auth/useLensUser';
+import {
+  useAddress,
+  useNetworkMismatch,
+  useNetwork,
+  ConnectWallet,
+  ChainId,
+  MediaRenderer,
+} from "@thirdweb-dev/react";
+import React from "react";
+import useLensUser from "../lib/auth/useLensUser";
+import useLogin from "../lib/auth/useLogin";
 
 type Props = {};
 
-export default function SignInButton({}: Props){
-    
-    const address = useAddress() // Detect connected addresss
-    const isOnWrongNetwork = useNetworkMismatch() // Detect if user is on wrong network
-    const [, switchNetwork] = useNetwork() // Function to switch the network
-    const {isSignedInQuery, profileQuery} = useLensUser();
-    const {mutate: requestLogin} = useLogin();
+export default function SignInButton({}: Props) {
+  const address = useAddress(); // Detect the connected address
+  const isOnWrongNetwork = useNetworkMismatch(); // Detect if the user is on the wrong network
+  const [, switchNetwork] = useNetwork(); // Function to switch the network.
+  const { isSignedInQuery, profileQuery } = useLensUser();
+  const { mutate: requestLogin } = useLogin();
 
-    // 1. User needs to connect wallet
-        if (!address) {
-            return <ConnectWallet />;
-        }
+  // 1. User needs to connect their wallet
+  if (!address) {
+    return <ConnectWallet />;
+  }
 
-    // 2. User needs to switch to Polygon Network
-        if (isOnWrongNetwork) {
-            return (
-                <button onClick={() => switchNetwork?.(ChainId.Polygon)}>
-                    Switch Network
-                </button>
-            )
-        }
-    
-        // Loading Signed-in State
-        if (isSignedInQuery.isLoading) {
-            return <div>Welcome to Hyphen</div>;
-        }
+  // 2. User needs to switch network to Polygon
+  if (isOnWrongNetwork) {
+    return (
+      <button onClick={() => switchNetwork?.(ChainId.Polygon)}>
+        Switch Network
+      </button>
+    );
+  }
 
-        // If user not signed in, request login
-        if (!isSignedInQuery.data) {
-            return <button onClick ={() => requestLogin()}> Connect with Lens</button>;
-        }
+  // Loading their signed in state
+  if (isSignedInQuery.isLoading) {
+    return <div>Loading...</div>;
+  }
 
-        // Loading Profile Information
-        if (profileQuery.isLoading) {
-            return <div>Loading your experience.</div>;
-        }
+  // If the user is not signed in, we need to request a login
+  if (!isSignedInQuery.data) {
+    return <button onClick={() => requestLogin()}>Sign in with Lens</button>;
+  }
 
-        // If done loading but no default profile
-        if (!profileQuery.data?.defaultProfile) {
-            return <div>No Lens profile available.</div>
-        }
+  // Loading their profile information
+  if (profileQuery.isLoading) {
+    return <div>Loading...</div>;
+  }
 
-        // If done loading and there is a default profile
-        if (profileQuery.data?.defaultProfile) {
-            return <div>Hello {profileQuery.data?.defaultProfile?.handle</div>
-        }
+  // If it's done loading and there's no default profile
+  if (!profileQuery.data?.defaultProfile) {
+    return <div>No Lens Profile.</div>;
+  }
 
-        return (
-            <div>Something went wrong.</div>
-        )
-    }
+  // If it's done loading and there's a default profile
+  if (profileQuery.data?.defaultProfile) {
+    return (
+      <div>
+        <MediaRenderer
+          // @ts-ignore
+          src={profileQuery?.data?.defaultProfile?.picture?.original?.url || ""}
+          alt={profileQuery.data.defaultProfile.name || ""}
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: "50%",
+          }}
+        />
+      </div>
+    );
+  }
+
+  return <div>Something went wrong.</div>;
+}

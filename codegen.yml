@@ -1,27 +1,22 @@
-# 1. Schema (graphql schema location)
-
-schema: "src/graphql/schema.graphql"
-
-# 2. Documents (graphql operations) 
-# Examples https://github.com/lens-protocol/api-examples/tree/master/src/graphql
-
+# 1. Schema - where is the graphql schema located?
+schema: "https://api.lens.dev"
+# 2. Documents - what path are the graphql operations located at?
+# Our docuemnts are located at /src/graphql
 documents: "src/graphql/*.graphql"
 
-# Output path, plugins, and optional config 
-
-generates: 
+# 3 Where do we want to generate the output
+# What plugins do we want to include
+# what optional configuration flags do we want to include?
+generates:
   src/graphql/generated.ts:
     plugins:
       - typescript
       - typescript-operations
       - typescript-react-query
       - fragment-matcher
-
     config:
       dedupeFragments: true
       fetcher:
-        # Function to run
-        func: "./auth-fetcher#fetchData"
-        isReactHook: false 
-
-
+        # What function to run?
+        func: "./auth-fetcher#fetcher"
+        isReactHook: false

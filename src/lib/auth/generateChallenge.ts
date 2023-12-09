@@ -1,10 +1,17 @@
-import { ChallengeDocument, ChallengeQuery, ChallengeQueryVariables} from "@/graphql/generated";
-import { fetchData } from "@/graphql/auth-fetcher";
+import { fetcher } from "../../graphql/auth-fetcher";
+import {
+  ChallengeQuery,
+  ChallengeQueryVariables,
+  ChallengeDocument,
+} from "../../graphql/generated";
 
 export default async function generateChallenge(address: string) {
-    return await fetchData<ChallengeQuery, ChallengeQueryVariables>(ChallengeDocument, {
-        request: {
-            address,
-        },
-    })();
+  return await fetcher<ChallengeQuery, ChallengeQueryVariables>(
+    ChallengeDocument,
+    {
+      request: {
+        address,
+      },
+    }
+  )();
 }
