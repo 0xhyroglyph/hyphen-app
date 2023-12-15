@@ -20,3 +20,4 @@ generates:
         # What function to run?
         func: "./auth-fetcher#fetcher"
         isReactHook: false
+nn
